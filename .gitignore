@@ -1,0 +1,13 @@
+.ipynb_checkpoints
+__pycache__
+.DS_Store
+.env*
+.venv/
+logs/
+.pageindex/
+dist/
+/results/
+/examples/data
+.ruff_cache
+.pytest_cache
+/tests
