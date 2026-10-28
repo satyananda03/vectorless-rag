@@ -130,9 +130,9 @@ def fit_figures(content_list: list[dict], tmp_dir: Path) -> None:
             raise RuntimeError(f"Gambar tidak bisa dibaca: {source}") from e
 
 
-def host_figures(content_list: list[dict]) -> None:
-    """Upload every local ``img_path`` of ``content_list`` to S3, in place; URLs are already hosted.
+def host_figures(content_list: list[dict], doc_name: str) -> None:
+    """Upload every local ``img_path`` of ``content_list`` to S3 under ``doc_name``, in place; URLs are already hosted.
 
     That is every ``image`` item, plus the ``text`` items of a slide deck (``slides.py``).
     """
-    upload_figures_to_s3([item for item in content_list if item.get("img_path") and not _is_url(item["img_path"])])
+    upload_figures_to_s3([item for item in content_list if item.get("img_path") and not _is_url(item["img_path"])], doc_name)

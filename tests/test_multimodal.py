@@ -99,7 +99,7 @@ def stub_textract(monkeypatch, parsed_for):
     """Replace Textract + VLM: ``parsed_for(pages)`` builds the Parsed; returns the calls."""
     calls = []
 
-    def parse(self, pdf, tmp, pages, image=None):
+    def parse(self, pdf, tmp, pages, image, doc_name):
         calls.append(pages)
         return parsed_for(pages)
 
@@ -232,3 +232,12 @@ def test_non_multimodal_files_keep_upstream_errors(client, tmp_path):
         client.submit_document(str(tmp_path / "notes.txt"))
     with pytest.raises(FileNotFoundError):
         client.submit_document(str(tmp_path / "missing.pdf"))
+
+
+def test_figure_is_stored_as_asset_of_its_document():
+    from vectorless_rag.config import settings
+    from vectorless_rag.storage.s3.objects import figure_key, object_url
+    key = figure_key("/tmp/work/figure_p0_ab12cd34.JPG", "Laporan Q3")
+    assert key == f"{settings.s3_prefix.strip('/')}/Laporan Q3/img/figure_p0_ab12cd34.jpg"
+    settings.s3_bucket = settings.s3_bucket or "bucket"
+    assert object_url(key).endswith("/Laporan%20Q3/img/figure_p0_ab12cd34.jpg")

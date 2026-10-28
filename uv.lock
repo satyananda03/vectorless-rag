@@ -5341,6 +5341,7 @@ dependencies = [
     { name = "pageindex" },
     { name = "pydantic-settings" },
     { name = "pymupdf" },
+    { name = "python-dotenv" },
     { name = "tenacity" },
     { name = "unstructured", extra = ["xlsx"] },
 ]
@@ -5381,6 +5382,7 @@ requires-dist = [
     { name = "pageindex", git = "https://github.com/VectifyAI/PageIndex?rev=c11c2342877e0e42aecbc7583c9a1a22be0ad000" },
     { name = "pydantic-settings", specifier = ">=2.16.0" },
     { name = "pymupdf", specifier = ">=1.28.2" },
+    { name = "python-dotenv", specifier = ">=1.2.4" },
     { name = "tenacity" },
     { name = "unoserver", marker = "extra == 'office'" },
     { name = "unstructured", extras = ["xlsx"], specifier = ">=0.27.25" },

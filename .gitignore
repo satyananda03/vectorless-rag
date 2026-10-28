@@ -4,5 +4,5 @@
 .pageindex/
 __pycache__/
 .ipynb_checkpoints/
-data/
+/examples/data/
 *.egg-info/

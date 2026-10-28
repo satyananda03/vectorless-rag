@@ -42,6 +42,8 @@ from pageindex.local_api import LocalAPI
 from pageindex.naming import sanitize_filename
 from pageindex.utils import run_off_loop
 
+from .config import settings
+
 logger = logging.getLogger(__name__)
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
@@ -346,9 +348,10 @@ _extract_toc.multimodal = True
 
 
 def install() -> None:
-    """Route Flash's extraction through ``_extract_toc``; idempotent."""
+    """Route Flash's extraction through ``_extract_toc`` and set its flat-tree limit; idempotent."""
     global _original_extract_toc
     import pageindex.flash.api as flash_api
+    flash_api.FLAT_TREE_MAX_NODES = settings.flat_tree_max_nodes
     if getattr(flash_api.extract_toc, "multimodal", False):
         return
     _original_extract_toc = flash_api.extract_toc
@@ -414,7 +417,7 @@ class MultimodalLocalAPI(LocalAPI):
         else:
             pages = textract_pages(pdf)
             image = src if src.suffix.lower() in IMAGE_EXTS else None
-            parsed = run_off_loop(self._parse, pdf, tmp, pages, image) if pages else None
+            parsed = run_off_loop(self._parse, pdf, tmp, pages, image, sanitize_filename(src.stem)) if pages else None
             if parsed is None:
                 return LocalAPI._extract_page_texts(file_path)
         with self._lock:
@@ -434,7 +437,7 @@ class MultimodalLocalAPI(LocalAPI):
     # ── parsers ──
 
     def _parse(self, pdf: Path, tmp: Path, pages: list[int],
-               image: Path | None = None) -> Parsed | None:
+               image: Path | None, doc_name: str) -> Parsed | None:
         """Textract on ``pages`` → content list → S3 → VLM → pages; None keeps the original text.
 
         Only ``pages`` go to Textract (as a sub-PDF); every other page keeps the
@@ -469,7 +472,7 @@ class MultimodalLocalAPI(LocalAPI):
             remap_pages(content_list, raw, pages)
             if image is not None and text_coverage(raw["pages"][0]) < VISUAL_TEXT_COVERAGE:
                 content_list = as_whole_image(content_list, image_for_vlm(image, tmp))
-            host_figures(content_list)
+            host_figures(content_list, doc_name)
             asyncio.run(describe_figures(content_list))
         except Exception as e:
             if has_text_layer(pdf):
@@ -493,7 +496,7 @@ class MultimodalLocalAPI(LocalAPI):
             sheet_names = _sheet_names(src)
             content_list = parse_xlsx(src, tmp / "images")
             remap_sheets(content_list, sheet_names)
-            host_figures(content_list)
+            host_figures(content_list, sanitize_filename(src.stem))
             asyncio.run(describe_figures(content_list))
         except Exception as e:
             raise PageIndexAPIError(f"Failed to submit document: could not read spreadsheet: {e}") from e

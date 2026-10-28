@@ -1,11 +1,10 @@
 """S3 for the Textract parser: the async job's input PDF and the figure crops."""
-import hashlib
 import logging
 import mimetypes
-import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import quote
 import boto3
 from botocore.config import Config as BotoConfig
 from ...config import settings
@@ -42,17 +41,18 @@ def delete_object(key: str) -> None:
 
 def object_url(key: str) -> str:
     """Public URL of one object. The VLM fetches figures from it directly."""
-    return f"https://{require_bucket()}.s3.{settings.s3_region}.amazonaws.com/{key}"
+    return f"https://{require_bucket()}.s3.{settings.s3_region}.amazonaws.com/{quote(key)}"
 
-def figure_key(file_path: str) -> str:
-    """Object key of one figure crop, under ``S3_PREFIX``."""
-    ext = Path(file_path).suffix.lower() or ".jpg"
-    stamp = time.strftime("%y%m%d%H%M%S")
-    short_hash = hashlib.md5(file_path.encode()).hexdigest()[:8]
-    return f"{settings.s3_prefix.strip('/')}/{stamp}_{short_hash}{ext}"
+def figure_key(file_path: str, doc_name: str) -> str:
+    """Object key of one figure: ``S3_PREFIX/<doc_name>/img/<img_id>``, the figure as an asset of its document.
 
-def upload_figures_to_s3(items: list[dict], max_workers: int = 5) -> None:
-    """Upload every figure in parallel and replace its ``img_path`` with the URL.
+    ``img_id`` is the local file's stem, already unique within a document.
+    """
+    path = Path(file_path)
+    return f"{settings.s3_prefix.strip('/')}/{doc_name}/img/{path.stem}{path.suffix.lower() or '.jpg'}"
+
+def upload_figures_to_s3(items: list[dict], doc_name: str, max_workers: int = 5) -> None:
+    """Upload every figure of ``doc_name`` in parallel and replace its ``img_path`` with the URL.
 
     All or nothing: when an upload still fails after boto3's own retries, no
     ``img_path`` is rewritten and the error is raised. The document then fails at
@@ -62,7 +62,7 @@ def upload_figures_to_s3(items: list[dict], max_workers: int = 5) -> None:
     if not items:
         return
     def _put(path: str) -> str:
-        key = figure_key(path)
+        key = figure_key(path, doc_name)
         try:
             with open(path, "rb") as fh:
                 upload_fileobj(fh, key, mimetypes.guess_type(path)[0])

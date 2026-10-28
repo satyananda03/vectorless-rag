@@ -17,6 +17,7 @@ dependencies = [
     "html-table-rescuer>=0.3.1",
     "openpyxl",
     "beautifulsoup4",
+    "python-dotenv>=1.2.4",
 ]
 
 [project.optional-dependencies]
