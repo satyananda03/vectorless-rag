@@ -1,12 +1,9 @@
 [project]
 name = "vectorless-rag"
 version = "0.1.0"
-description = "Vectorless RAG on PageIndex: Textract + VLM multimodal indexing (scans, images, office files, xlsx, tables, figures) and the audit agent"
+description = "Vectorless RAG on PageIndex with multimodal support"
 requires-python = ">=3.11"
 dependencies = [
-    # Upstream PageIndex, pinned to a tested commit; litellm, openai, PyPDF2, ... come
-    # pinned by it. To upgrade: change the commit, `uv lock --upgrade-package pageindex`,
-    # then `uv run pytest`.
     "pageindex @ git+https://github.com/VectifyAI/PageIndex@c11c2342877e0e42aecbc7583c9a1a22be0ad000",
     "pymupdf>=1.28.2",
     "boto3>=1.43.114",
@@ -23,9 +20,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# .docx/.pptx/.doc/.odt/.rtf -> PDF through `unoconvert`; also needs LibreOffice on the system
 office = ["unoserver"]
-# the audit agent in app/
 app = ["langgraph>=1.2.5", "langchain>=1.3.14", "deepagents>=0.6.10", "langfuse>=4.14.0", "openai"]
 
 [dependency-groups]
