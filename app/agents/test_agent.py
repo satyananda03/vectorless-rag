@@ -4,21 +4,21 @@ import json
 from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
 from langchain_core.messages import AIMessage
 
-from pageindex import PageIndexClient
+from vectorless_rag import MultimodalClient
 from pageindex.agent_tools import _local_description, _local_schema, call_tool
-from pageindex.langgraph_tools import pageindex_tools
+from vectorless_rag import pageindex_tools
 
 
 def _library(tmp_path):
     """A local library holding one workbook, stored without any model call."""
-    client = PageIndexClient(index={"storage_path": str(tmp_path)})
+    client = MultimodalClient(storage_path=str(tmp_path))
     meta = {"id": "pi-test", "name": "rekap.xlsx", "description": "Rekap layanan", "status": "completed",
             "createdAt": "2026-10-18T00:00:00.000Z", "pageNum": 2, "folderId": None,
             "metadata": None, "mode": "flash"}
     tree = [{"title": "Daftar", "node_id": "0000", "start_index": 1, "end_index": 1, "summary": "daftar"},
             {"title": "Rekap", "node_id": "0001", "start_index": 2, "end_index": 2, "summary": "rekap"}]
-    pages = [{"page_index": 1, "markdown": "| No | Layanan |", "sheet": "Daftar"},
-             {"page_index": 2, "markdown": "| Metrik | Nilai |", "sheet": "Rekap"}]
+    pages = [{"page_index": 1, "markdown": "Sheet: Daftar\n\n| No | Layanan |"},
+             {"page_index": 2, "markdown": "Sheet: Rekap\n\n| Metrik | Nilai |"}]
     client._api._store.save_document("pi-test", meta, tree, pages)
     return client
 
